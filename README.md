@@ -39,11 +39,11 @@ A release build must be signed with your own release key. You can create a self-
 
 #### 1. Create the release keystore
 
-Run this once, outside the repository (for example, in `~/projects`):
+Run this once and place the keystore inside the Android module (it is already gitignored, so it will not be committed):
 
 ```bash
 keytool -genkey -v \
-  -keystore ~/projects/pathplayer-release-key.jks \
+  -keystore android/pathplayer-release-key.jks \
   -keyalg RSA -keysize 2048 -validity 10000 \
   -alias pathplayer
 ```
@@ -58,10 +58,10 @@ Create `android/key.properties` (this file is already gitignored) and point it a
 storePassword=YOUR_KEYSTORE_PASSWORD
 keyPassword=YOUR_KEY_PASSWORD
 keyAlias=pathplayer
-storeFile=/Users/YOUR_USERNAME/projects/pathplayer-release-key.jks
+storeFile=../pathplayer-release-key.jks
 ```
 
-Replace `YOUR_USERNAME` with your actual home directory name and `YOUR_KEYSTORE_PASSWORD` / `YOUR_KEY_PASSWORD` with the passwords you chose in step 1.
+Replace `YOUR_KEYSTORE_PASSWORD` / `YOUR_KEY_PASSWORD` with the passwords you chose in step 1.
 
 #### 3. Build the release APK
 
