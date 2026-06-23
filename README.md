@@ -73,3 +73,16 @@ build/app/outputs/flutter-apk/app-release.apk
    ```bash
    .flutter/flutter/bin/flutter run
    ```
+
+---
+
+## Integration smoke test
+
+`tool/test_jellyfin.dart` is a small command-line script that exercises the Jellyfin API. It reads credentials from environment variables so no secrets are committed:
+
+```bash
+export JELLYFIN_URL='http://YOUR_SERVER_IP:8096'
+export JELLYFIN_USER='YOUR_USERNAME'
+export JELLYFIN_PASSWORD='YOUR_PASSWORD'
+.flutter/flutter/bin/dart run tool/test_jellyfin.dart
+```
