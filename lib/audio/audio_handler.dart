@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:audio_service/audio_service.dart';
 import 'package:just_audio/just_audio.dart';
 
@@ -8,6 +10,10 @@ import '../services/jellyfin_api.dart';
 ///
 /// This is what keeps playback alive while the app is in the background and
 /// surfaces media controls in the system notification / lock screen.
+///
+/// To avoid the long initialization times (and occasional hangs) that come
+/// from handing [just_audio] hundreds of network audio sources at once, we
+/// keep the queue in memory and only set a single [AudioSource] at a time.
 class AudioPlayerHandler extends BaseAudioHandler {
   AudioPlayerHandler(this._api) {
     // Forward just_audio playback events to audio_service's playbackState.
@@ -15,11 +21,10 @@ class AudioPlayerHandler extends BaseAudioHandler {
         .map(_transformEvent)
         .listen((state) => playbackState.add(state));
 
-    // Keep the displayed media item in sync with the current queue index.
-    _player.currentIndexStream.listen((index) {
-      final queue = this.queue.value;
-      if (index != null && index >= 0 && index < queue.length) {
-        mediaItem.add(queue[index]);
+    // When the current track finishes, advance to the next one manually.
+    _player.processingStateStream.listen((state) {
+      if (state == ProcessingState.completed) {
+        skipToNext();
       }
     });
   }
@@ -27,36 +32,86 @@ class AudioPlayerHandler extends BaseAudioHandler {
   final JellyfinApiClient _api;
   final AudioPlayer _player = AudioPlayer();
 
+  List<JellyfinItem> _queue = [];
+  int _queueIndex = -1;
+
   AudioPlayer get player => _player;
 
-  /// Replaces the queue with [items] and starts at [initialIndex].
+  @override
+  Future<void> skipToNext() async {
+    if (_queueIndex < _queue.length - 1) {
+      _queueIndex++;
+      await _loadQueueIndex();
+    } else {
+      await _player.pause();
+    }
+  }
+
+  @override
+  Future<void> skipToPrevious() async {
+    if (_queueIndex > 0) {
+      _queueIndex--;
+      await _loadQueueIndex();
+    } else {
+      await _player.seek(Duration.zero);
+    }
+  }
+
+  /// Replaces the in-memory queue with [items] and loads the item at
+  /// [initialIndex]. The audio-service queue is updated so the system
+  /// notification sees the full playlist, but only the current item is given
+  /// to [just_audio].
   Future<void> setQueue(List<JellyfinItem> items, {int initialIndex = 0}) async {
-    final mediaItems = items.map(_itemToMediaItem).toList();
+    _queue = List<JellyfinItem>.from(items);
+    _queueIndex = _queue.isEmpty
+        ? -1
+        : initialIndex.clamp(0, _queue.length - 1);
+
+    final mediaItems = _queue.map(_itemToMediaItem).toList();
     queue.add(mediaItems);
 
-    final children = <AudioSource>[
-      for (final item in items) AudioSource.uri(Uri.parse(_api.streamUrl(item.id))),
-    ];
-
-    await _player.setAudioSources(
-      children,
-      initialIndex: initialIndex,
-    );
-    if (initialIndex == 0) {
-      mediaItem.add(mediaItems.isNotEmpty ? mediaItems.first : null);
+    if (_queueIndex >= 0) {
+      await _loadQueueIndex();
     }
   }
 
   Future<void> playItem(JellyfinItem item) async {
     await setQueue([item]);
-    await _player.play();
+    // Start playback without awaiting: the completion future from the platform
+    // can hang, but the audio itself begins as soon as the source is loaded.
+    _playWithTimeout();
   }
 
   Future<void> playItems(List<JellyfinItem> items, {bool shuffle = false}) async {
     if (items.isEmpty) return;
     final queue = shuffle ? (List<JellyfinItem>.from(items)..shuffle()) : items;
     await setQueue(queue);
-    await _player.play();
+    // Start playback without awaiting so the UI spinner disappears as soon as
+    // the queue is loaded and audio begins.
+    _playWithTimeout();
+  }
+
+  /// Calls [AudioPlayer.play] with a timeout so a platform/ExoPlayer hang
+  /// cannot block the UI indefinitely. Playback usually starts even when the
+  /// completion future is slow to return.
+  Future<void> _playWithTimeout() async {
+    try {
+      await _player.play().timeout(const Duration(seconds: 15));
+    } on TimeoutException {
+      // The play command was accepted but the completion future never arrived.
+      // Continue so the UI is not frozen; audio is already playing or will.
+    }
+  }
+
+  Future<void> _loadQueueIndex() async {
+    if (_queueIndex < 0 || _queueIndex >= _queue.length) return;
+
+    final item = _queue[_queueIndex];
+    mediaItem.add(_itemToMediaItem(item));
+
+    await _player.setAudioSource(
+      AudioSource.uri(Uri.parse(_api.streamUrl(item.id))),
+    );
   }
 
   @override
@@ -67,12 +122,6 @@ class AudioPlayerHandler extends BaseAudioHandler {
 
   @override
   Future<void> seek(Duration position) => _player.seek(position);
-
-  @override
-  Future<void> skipToNext() => _player.seekToNext();
-
-  @override
-  Future<void> skipToPrevious() => _player.seekToPrevious();
 
   @override
   Future<void> stop() async {
@@ -114,7 +163,7 @@ class AudioPlayerHandler extends BaseAudioHandler {
       updatePosition: event.updatePosition,
       bufferedPosition: _player.bufferedPosition,
       speed: _player.speed,
-      queueIndex: event.currentIndex,
+      queueIndex: _queueIndex >= 0 ? _queueIndex : null,
     );
   }
 }
