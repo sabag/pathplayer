@@ -3,11 +3,13 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../models/track.dart';
+import '../models/jellyfin_item.dart';
 import '../providers/player_provider.dart';
 import '../providers/search_provider.dart';
+import '../widgets/folder_tile.dart';
 import '../widgets/mini_player.dart';
 import '../widgets/track_tile.dart';
+import 'directory_screen.dart';
 
 class SearchScreen extends ConsumerStatefulWidget {
   const SearchScreen({super.key});
@@ -38,7 +40,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   @override
   Widget build(BuildContext context) {
     final resultsAsync = _query.isEmpty
-        ? const AsyncValue<Search3Result>.data(Search3Result(songs: []))
+        ? const AsyncValue<List<JellyfinItem>>.data([])
         : ref.watch(searchProvider(_query));
 
     return Scaffold(
@@ -58,21 +60,36 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         ),
       ),
       body: resultsAsync.when(
-        data: (result) {
+        data: (items) {
           if (_query.isEmpty) {
             return const Center(child: Text('Type to search'));
           }
-          if (result.songs.isEmpty) {
-            return const Center(child: Text('No tracks found'));
+          if (items.isEmpty) {
+            return const Center(child: Text('No results found'));
           }
           return ListView.builder(
-            itemCount: result.songs.length,
+            itemCount: items.length,
             itemBuilder: (context, index) {
-              final track = result.songs[index];
+              final item = items[index];
+              if (item.isFolder) {
+                return FolderTile(
+                  title: item.displayName,
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => DirectoryScreen(
+                          id: item.id,
+                          name: item.displayName,
+                        ),
+                      ),
+                    );
+                  },
+                );
+              }
               return TrackTile(
-                track: track,
+                item: item,
                 onTap: () {
-                  ref.read(playerNotifierProvider.notifier).playTrack(track);
+                  ref.read(playerNotifierProvider.notifier).playItem(item);
                 },
               );
             },

@@ -1,15 +1,15 @@
 import 'package:audio_service/audio_service.dart';
 import 'package:just_audio/just_audio.dart';
 
-import '../models/track.dart';
-import '../services/navidrome_api.dart';
+import '../models/jellyfin_item.dart';
+import '../services/jellyfin_api.dart';
 
 /// Audio-service handler backed by [just_audio]'s [AudioPlayer].
 ///
 /// This is what keeps playback alive while the app is in the background and
 /// surfaces media controls in the system notification / lock screen.
 class AudioPlayerHandler extends BaseAudioHandler {
-  AudioPlayerHandler() {
+  AudioPlayerHandler(this._api) {
     // Forward just_audio playback events to audio_service's playbackState.
     _player.playbackEventStream
         .map(_transformEvent)
@@ -24,18 +24,18 @@ class AudioPlayerHandler extends BaseAudioHandler {
     });
   }
 
+  final JellyfinApiClient _api;
   final AudioPlayer _player = AudioPlayer();
 
   AudioPlayer get player => _player;
 
-  /// Replaces the queue with [tracks] and starts at [initialIndex].
-  Future<void> setQueue(List<Track> tracks, {int initialIndex = 0}) async {
-    final mediaItems = tracks.map(_trackToMediaItem).toList();
+  /// Replaces the queue with [items] and starts at [initialIndex].
+  Future<void> setQueue(List<JellyfinItem> items, {int initialIndex = 0}) async {
+    final mediaItems = items.map(_itemToMediaItem).toList();
     queue.add(mediaItems);
 
     final children = <AudioSource>[
-      for (final track in tracks)
-        AudioSource.uri(Uri.parse(_api.streamUrl(track.id))),
+      for (final item in items) AudioSource.uri(Uri.parse(_api.streamUrl(item.id))),
     ];
 
     await _player.setAudioSources(
@@ -47,14 +47,14 @@ class AudioPlayerHandler extends BaseAudioHandler {
     }
   }
 
-  Future<void> playTrack(Track track) async {
-    await setQueue([track]);
+  Future<void> playItem(JellyfinItem item) async {
+    await setQueue([item]);
     await _player.play();
   }
 
-  Future<void> playTracks(List<Track> tracks, {bool shuffle = false}) async {
-    if (tracks.isEmpty) return;
-    final queue = shuffle ? (List<Track>.from(tracks)..shuffle()) : tracks;
+  Future<void> playItems(List<JellyfinItem> items, {bool shuffle = false}) async {
+    if (items.isEmpty) return;
+    final queue = shuffle ? (List<JellyfinItem>.from(items)..shuffle()) : items;
     await setQueue(queue);
     await _player.play();
   }
@@ -80,15 +80,13 @@ class AudioPlayerHandler extends BaseAudioHandler {
     return super.stop();
   }
 
-  MediaItem _trackToMediaItem(Track track) {
+  MediaItem _itemToMediaItem(JellyfinItem item) {
     return MediaItem(
-      id: track.id,
-      title: track.title,
-      artist: track.artist,
-      album: track.album,
-      duration: track.duration != null
-          ? Duration(seconds: track.duration!)
-          : null,
+      id: item.id,
+      title: item.name,
+      artist: item.artist,
+      album: item.album,
+      duration: item.duration,
     );
   }
 
@@ -120,5 +118,3 @@ class AudioPlayerHandler extends BaseAudioHandler {
     );
   }
 }
-
-final NavidromeApiClient _api = NavidromeApiClient(dio: createNavidromeDio());

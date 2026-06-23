@@ -2,10 +2,10 @@
 ///
 /// These values will be replaced by a login/settings screen in a future
 /// iteration.
-class SubsonicConfig {
-  const SubsonicConfig._();
+class JellyfinConfig {
+  const JellyfinConfig._();
 
-  static const String baseUrl = 'https://YOUR_SERVER_DOMAIN';
+  static const String baseUrl = 'http://YOUR_JELLYFIN_SERVER:8096';
   static const String username = 'YOUR_USERNAME';
   static const String password = 'YOUR_PASSWORD';
 }

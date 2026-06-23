@@ -42,10 +42,8 @@ dependencies:
   # Audio playback
   just_audio: ^0.10.0
   audio_service: ^0.18.16
-  # Crypto (MD5 for Subsonic token)
-  crypto: ^3.0.6
-  # Secure credential storage
-  flutter_secure_storage: ^9.2.4
+  # Annotations
+  meta: ^1.15.0
 
 dev_dependencies:
   flutter_test:

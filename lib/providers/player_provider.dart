@@ -3,7 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../audio/audio_handler.dart';
-import '../models/track.dart';
+import '../models/jellyfin_item.dart';
 
 final audioHandlerProvider = Provider<AudioPlayerHandler>(
   (ref) => throw UnsupportedError(
@@ -46,10 +46,10 @@ class PlayerNotifier extends ChangeNotifier {
 
   Duration get duration => _duration;
 
-  Future<void> playTrack(Track track) => _handler.playTrack(track);
+  Future<void> playItem(JellyfinItem item) => _handler.playItem(item);
 
-  Future<void> playTracks(List<Track> tracks, {bool shuffle = false}) =>
-      _handler.playTracks(tracks, shuffle: shuffle);
+  Future<void> playItems(List<JellyfinItem> items, {bool shuffle = false}) =>
+      _handler.playItems(items, shuffle: shuffle);
 
   Future<void> togglePlayPause() async {
     if (_handler.player.playing) {

@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../providers/player_provider.dart';
 import '../providers/root_indexes_provider.dart';
 import '../widgets/folder_tile.dart';
 import '../widgets/mini_player.dart';
+import '../widgets/track_tile.dart';
 import 'directory_screen.dart';
 import 'search_screen.dart';
 
@@ -12,7 +14,7 @@ class BrowseScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final indexesAsync = ref.watch(rootIndexesProvider);
+    final itemsAsync = ref.watch(rootItemsProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -30,29 +32,31 @@ class BrowseScreen extends ConsumerWidget {
           ),
         ],
       ),
-      body: indexesAsync.when(
-        data: (result) => ListView.builder(
-          itemCount: result.groups.length,
-          itemBuilder: (context, groupIndex) {
-            final group = result.groups[groupIndex];
-            return ExpansionTile(
-              initiallyExpanded: true,
-              title: Text(group.name),
-              children: group.artists.map((artist) {
-                return FolderTile(
-                  title: artist.name,
-                  onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute<void>(
-                        builder: (_) => DirectoryScreen(
-                          id: artist.id,
-                          name: artist.name,
-                        ),
-                      ),
-                    );
-                  },
+      body: itemsAsync.when(
+        data: (items) => ListView.builder(
+          itemCount: items.length,
+          itemBuilder: (context, index) {
+            final item = items[index];
+            if (item.isAudio) {
+              return TrackTile(
+                item: item,
+                onTap: () {
+                  ref.read(playerNotifierProvider.notifier).playItem(item);
+                },
+              );
+            }
+            return FolderTile(
+              title: item.displayName,
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => DirectoryScreen(
+                      id: item.id,
+                      name: item.displayName,
+                    ),
+                  ),
                 );
-              }).toList(),
+              },
             );
           },
         ),

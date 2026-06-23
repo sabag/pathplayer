@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 
-import '../models/track.dart';
+import '../models/jellyfin_item.dart';
 
 class TrackTile extends StatelessWidget {
   const TrackTile({
     super.key,
-    required this.track,
+    required this.item,
     this.trailing,
     required this.onTap,
   });
 
-  final Track track;
+  final JellyfinItem item;
   final Widget? trailing;
   final VoidCallback onTap;
 
@@ -18,7 +18,7 @@ class TrackTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListTile(
       leading: const Icon(Icons.music_note_outlined),
-      title: Text(track.title),
+      title: Text(item.displayName),
       subtitle: _buildSubtitle(),
       trailing: trailing,
       onTap: onTap,
@@ -27,8 +27,8 @@ class TrackTile extends StatelessWidget {
 
   Widget? _buildSubtitle() {
     final parts = <String>[
-      if (track.artist != null && track.artist!.isNotEmpty) track.artist!,
-      if (track.album != null && track.album!.isNotEmpty) track.album!,
+      if (item.artist != null && item.artist!.isNotEmpty) item.artist!,
+      if (item.album != null && item.album!.isNotEmpty) item.album!,
     ];
     if (parts.isEmpty) return null;
     return Text(parts.join(' • '));

@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../models/directory.dart';
-import '../models/track.dart';
+import '../models/jellyfin_item.dart';
 import '../providers/directory_provider.dart';
 import '../providers/player_provider.dart';
 import '../widgets/folder_tile.dart';
@@ -26,14 +25,14 @@ class DirectoryScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: Text(name)),
       body: directoryAsync.when(
-        data: (directory) => _DirectoryList(
-          directory: directory,
-          onPlayTrack: (track) {
-            ref.read(playerNotifierProvider.notifier).playTrack(track);
+        data: (items) => _DirectoryList(
+          items: items,
+          onPlayItem: (item) {
+            ref.read(playerNotifierProvider.notifier).playItem(item);
           },
-          onShuffle: (tracks) {
-            ref.read(playerNotifierProvider.notifier).playTracks(
-                  tracks,
+          onShuffle: (items) {
+            ref.read(playerNotifierProvider.notifier).playItems(
+                  items,
                   shuffle: true,
                 );
           },
@@ -53,46 +52,49 @@ class DirectoryScreen extends ConsumerWidget {
 
 class _DirectoryList extends StatelessWidget {
   const _DirectoryList({
-    required this.directory,
-    required this.onPlayTrack,
+    required this.items,
+    required this.onPlayItem,
     required this.onShuffle,
   });
 
-  final Directory directory;
-  final ValueChanged<Track> onPlayTrack;
-  final ValueChanged<List<Track>> onShuffle;
+  final List<JellyfinItem> items;
+  final ValueChanged<JellyfinItem> onPlayItem;
+  final ValueChanged<List<JellyfinItem>> onShuffle;
 
   @override
   Widget build(BuildContext context) {
-    final tracks = directory.tracks.map(Track.fromDirectoryItem).toList();
+    final audioItems = items.where((item) => item.isAudio).toList();
+    final folderItems = items.where((item) => item.isFolder).toList();
 
     return ListView.builder(
-      itemCount: directory.children.length + (tracks.isNotEmpty ? 1 : 0),
+      itemCount: folderItems.length +
+          audioItems.length +
+          (audioItems.isNotEmpty ? 1 : 0),
       itemBuilder: (context, index) {
-        if (tracks.isNotEmpty && index == 0) {
+        if (audioItems.isNotEmpty && index == 0) {
           return Padding(
             padding: const EdgeInsets.all(12),
             child: ElevatedButton.icon(
               icon: const Icon(Icons.shuffle),
               label: const Text('Shuffle Play Folder'),
-              onPressed: () => onShuffle(tracks),
+              onPressed: () => onShuffle(audioItems),
             ),
           );
         }
 
-        final childIndex = tracks.isNotEmpty ? index - 1 : index;
-        final item = directory.children[childIndex];
+        final offset = audioItems.isNotEmpty ? 1 : 0;
+        final folderIndex = index - offset;
 
-        if (item.isFolder) {
+        if (folderIndex < folderItems.length) {
+          final folder = folderItems[folderIndex];
           return FolderTile(
-            title: item.displayTitle,
-            subtitle: item.artist,
+            title: folder.displayName,
             onTap: () {
               Navigator.of(context).push(
                 MaterialPageRoute<void>(
                   builder: (_) => DirectoryScreen(
-                    id: item.id,
-                    name: item.displayTitle,
+                    id: folder.id,
+                    name: folder.displayName,
                   ),
                 ),
               );
@@ -100,10 +102,10 @@ class _DirectoryList extends StatelessWidget {
           );
         }
 
-        final track = Track.fromDirectoryItem(item);
+        final track = audioItems[folderIndex - folderItems.length];
         return TrackTile(
-          track: track,
-          onTap: () => onPlayTrack(track),
+          item: track,
+          onTap: () => onPlayItem(track),
         );
       },
     );
