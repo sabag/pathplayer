@@ -14,17 +14,25 @@ class JellyfinApiClient {
         'Authorization': JellyfinAuth.authHeader(token: credentials.accessToken),
       };
 
-  /// Returns the contents of the root music folder.
+  /// Returns the top-level music libraries, or the contents of the single
+  /// music library when only one exists.
   Future<List<JellyfinItem>> getTopLevelItems() async {
     final folders = await _getItems();
-    final musicFolder = folders.firstWhere(
-      (item) => item.isFolder && item.collectionType == 'music',
-      orElse: () => folders.firstWhere(
-        (item) => item.isFolder,
-        orElse: () => throw Exception('No top-level folder found'),
-      ),
-    );
-    return getChildren(musicFolder.id);
+    final musicFolders = folders
+        .where((item) => item.isFolder && item.collectionType == 'music')
+        .toList();
+
+    if (musicFolders.isEmpty) {
+      throw Exception('No music library found');
+    }
+
+    // If there is only one music library, open it directly.
+    // Otherwise show the list of libraries so the user can pick.
+    if (musicFolders.length == 1) {
+      return getChildren(musicFolders.first.id);
+    }
+
+    return musicFolders;
   }
 
   /// Returns the immediate children of [parentId].
