@@ -39,6 +39,16 @@ Future<void> main() async {
     print('  ${item.isFolder ? "[FOLDER]" : "[AUDIO]"} ${item.displayName}');
   }
 
+  final nestedFolder = children.where((item) => item.isFolder).firstOrNull;
+  if (nestedFolder != null) {
+    print('\n--- Recursive audio in ${nestedFolder.displayName} ---');
+    final recursive = await api.getRecursiveAudio(nestedFolder.id);
+    print('  Found ${recursive.length} audio files');
+    if (recursive.isNotEmpty) {
+      print('  First: ${recursive.first.displayName}');
+    }
+  }
+
   final firstAudio = children.firstWhere(
     (item) => item.isAudio,
     orElse: () => children.expand((c) => c.isAudio ? [c] : []).first,

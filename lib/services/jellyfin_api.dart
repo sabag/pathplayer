@@ -32,6 +32,16 @@ class JellyfinApiClient {
     return _getItems(parentId: parentId);
   }
 
+  /// Returns every audio file under [parentId], recursively.
+  Future<List<JellyfinItem>> getRecursiveAudio(String parentId) async {
+    return _getItems(
+      parentId: parentId,
+      recursive: true,
+      includeItemTypes: const ['Audio'],
+      limit: 5000,
+    );
+  }
+
   /// Searches for audio items matching [query].
   Future<List<JellyfinItem>> search(String query) async {
     final results = await _getItems(
