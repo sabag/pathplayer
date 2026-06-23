@@ -29,13 +29,19 @@ class MiniPlayer extends ConsumerWidget {
     if (!player.hasMedia) return const SizedBox.shrink();
 
     final media = player.mediaItem!;
+    final bottomInset = MediaQuery.of(context).viewPadding.bottom;
 
     return Material(
       elevation: 8,
       color: Theme.of(context).colorScheme.surfaceContainerHigh,
       child: Container(
-        height: 120,
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        height: 120 + bottomInset,
+        padding: EdgeInsets.only(
+          left: 12,
+          right: 12,
+          top: 8,
+          bottom: 8 + bottomInset,
+        ),
         child: Column(
           children: [
             GestureDetector(
