@@ -1,6 +1,5 @@
 import 'package:dio/dio.dart';
 
-import '../config.dart';
 import '../models/jellyfin_item.dart';
 import 'jellyfin_auth.dart';
 
@@ -46,7 +45,8 @@ class JellyfinApiClient {
 
   /// Builds a direct static stream URL for an audio [itemId].
   String streamUrl(String itemId) {
-    return '${JellyfinConfig.baseUrl}/Audio/$itemId/stream'
+    final base = dio.options.baseUrl;
+    return '$base/Audio/$itemId/stream'
         '?static=true&api_key=${credentials.accessToken}';
   }
 

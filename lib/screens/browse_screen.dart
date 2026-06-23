@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../providers/auth_controller.dart';
 import '../providers/player_provider.dart';
 import '../providers/root_indexes_provider.dart';
 import '../widgets/folder_tile.dart';
@@ -29,6 +30,25 @@ class BrowseScreen extends ConsumerWidget {
                 ),
               );
             },
+          ),
+          PopupMenuButton<String>(
+            onSelected: (value) async {
+              if (value == 'logout') {
+                await ref.read(authControllerProvider.notifier).logout();
+              }
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem<String>(
+                value: 'logout',
+                child: Row(
+                  children: [
+                    Icon(Icons.logout),
+                    SizedBox(width: 12),
+                    Text('Logout'),
+                  ],
+                ),
+              ),
+            ],
           ),
         ],
       ),

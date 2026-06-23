@@ -1,7 +1,5 @@
 import 'package:dio/dio.dart';
 
-import '../config.dart';
-
 /// Credentials returned by Jellyfin after authenticating by name.
 class JellyfinCredentials {
   const JellyfinCredentials({
@@ -19,12 +17,15 @@ class JellyfinAuth {
 
   final Dio _dio;
 
-  Future<JellyfinCredentials> authenticate() async {
+  Future<JellyfinCredentials> authenticate(
+    String username,
+    String password,
+  ) async {
     final response = await _dio.post<Map<String, dynamic>>(
       '/Users/AuthenticateByName',
       data: {
-        'Username': JellyfinConfig.username,
-        'Pw': JellyfinConfig.password,
+        'Username': username,
+        'Pw': password,
       },
       options: Options(
         headers: {'Authorization': authHeader()},

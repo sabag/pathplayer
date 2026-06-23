@@ -4,15 +4,9 @@ A folder-based Android music player built with Flutter. It connects to a local J
 
 ## Getting Started
 
-Before building, set your Jellyfin server details in `lib/config.dart`:
+On first launch the app shows a login screen. Enter your Jellyfin server URL, username, and password. Once connected, the credentials are saved securely on the device using the platform keychain/keystore, so you won't have to enter them again until you log out.
 
-```dart
-class JellyfinConfig {
-  static const String baseUrl = 'http://YOUR_JELLYFIN_SERVER:8096';
-  static const String username = 'YOUR_USERNAME';
-  static const String password = 'YOUR_PASSWORD';
-}
-```
+To log out later, open the menu in the top-right corner of the browse screen and choose **Logout**.
 
 If your Jellyfin server uses plain HTTP on your local network, `android:usesCleartextTraffic="true"` is already enabled in `AndroidManifest.xml`.
 

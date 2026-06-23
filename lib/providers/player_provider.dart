@@ -4,12 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../audio/audio_handler.dart';
 import '../models/jellyfin_item.dart';
-
-final audioHandlerProvider = Provider<AudioPlayerHandler>(
-  (ref) => throw UnsupportedError(
-    'audioHandlerProvider must be overridden after initAudioService()',
-  ),
-);
+import 'auth_controller.dart';
 
 final playerNotifierProvider = ChangeNotifierProvider<PlayerNotifier>(
   (ref) => PlayerNotifier(ref.watch(audioHandlerProvider)),

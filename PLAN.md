@@ -35,14 +35,16 @@ Whether implemented in Flutter or Kotlin, the application must adhere to a stric
 The coding agent must implement Jellyfin's username/password authentication and use the authenticated user's token for all subsequent requests.
 
 ### Authentication Flow
-1. `POST /Users/AuthenticateByName` with a JSON body containing `Username` and `Pw`.
-2. Include an `Authorization` header describing the client in this format:
+1. The app presents a login screen on first launch. The user enters the Jellyfin server URL, username, and password.
+2. On submit, the app calls `POST /Users/AuthenticateByName` with a JSON body containing `Username` and `Pw`.
+3. Include an `Authorization` header describing the client in this format:
    ```
    MediaBrowser Client="PathPlayer", Device="<device-name>", DeviceId="<device-id>", Version="1.0.0"
    ```
-3. On success, the response contains:
+4. On success, the response contains:
    * `User.Id` — used for per-user endpoints.
    * `AccessToken` — appended as `api_key=<token>` to stream URLs and sent as `Authorization: MediaBrowser Token=<token>` for API calls.
+5. Credentials are persisted securely with `flutter_secure_storage` (platform keychain/keystore), so subsequent launches authenticate automatically. A **Logout** action in the browse-screen menu clears the stored credentials and returns to the login screen.
 
 ### Target Endpoints
 
