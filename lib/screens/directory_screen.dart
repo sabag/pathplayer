@@ -68,8 +68,12 @@ class _DirectoryScreenState extends ConsumerState<DirectoryScreen> {
         data: (items) => _DirectoryList(
           items: items,
           isShuffling: _shuffling,
-          onPlayItem: (item) {
-            ref.read(playerNotifierProvider.notifier).playItem(item);
+          onPlayItem: (item, audioItems) {
+            final startIndex = audioItems.indexOf(item);
+            ref.read(playerNotifierProvider.notifier).playItemsFrom(
+                  audioItems,
+                  startIndex,
+                );
           },
           onShuffleAll: _shuffleAll,
         ),
@@ -96,7 +100,7 @@ class _DirectoryList extends StatelessWidget {
 
   final List<JellyfinItem> items;
   final bool isShuffling;
-  final ValueChanged<JellyfinItem> onPlayItem;
+  final void Function(JellyfinItem item, List<JellyfinItem> audioItems) onPlayItem;
   final VoidCallback onShuffleAll;
 
   @override
@@ -153,7 +157,7 @@ class _DirectoryList extends StatelessWidget {
         final track = audioItems[folderIndex - folderItems.length];
         return TrackTile(
           item: track,
-          onTap: () => onPlayItem(track),
+          onTap: () => onPlayItem(track, audioItems),
         );
       },
     );

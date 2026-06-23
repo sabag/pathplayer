@@ -46,6 +46,9 @@ class PlayerNotifier extends ChangeNotifier {
   Future<void> playItems(List<JellyfinItem> items, {bool shuffle = false}) =>
       _handler.playItems(items, shuffle: shuffle);
 
+  Future<void> playItemsFrom(List<JellyfinItem> items, int startIndex) =>
+      _handler.playItemsFrom(items, startIndex);
+
   Future<void> togglePlayPause() async {
     if (_handler.player.playing) {
       await _handler.pause();

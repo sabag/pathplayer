@@ -91,6 +91,15 @@ class AudioPlayerHandler extends BaseAudioHandler {
     _playWithTimeout();
   }
 
+  /// Plays [items] starting from the track at [startIndex].
+  /// Used when a user taps a single track in a directory and wants playback
+  /// to continue through the rest of that directory.
+  Future<void> playItemsFrom(List<JellyfinItem> items, int startIndex) async {
+    if (items.isEmpty) return;
+    await setQueue(items, initialIndex: startIndex);
+    _playWithTimeout();
+  }
+
   /// Calls [AudioPlayer.play] with a timeout so a platform/ExoPlayer hang
   /// cannot block the UI indefinitely. Playback usually starts even when the
   /// completion future is slow to return.
