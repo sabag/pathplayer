@@ -16,6 +16,7 @@ class MiniPlayer extends ConsumerWidget {
 
     return Material(
       elevation: 8,
+      color: Theme.of(context).colorScheme.surfaceContainerHigh,
       child: InkWell(
         onTap: () {
           Navigator.of(context).push(
