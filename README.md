@@ -33,9 +33,40 @@ build/app/outputs/flutter-apk/app-debug.apk
 
 ### Release APK
 
-A release build also requires a configured signing key. Update `android/app/build.gradle.kts` (or `android/key.properties`) with your keystore details, then run:
+A release build must be signed with your own release key. You can create a self-signed keystore locally — no online certificate purchase is required for manual distribution.
+
+**Important:** Keep your keystore file and passwords backed up securely. If you lose them, you will not be able to publish updates to existing installs.
+
+#### 1. Create the release keystore
+
+Run this once, outside the repository (for example, in `~/projects`):
 
 ```bash
+keytool -genkey -v \
+  -keystore ~/projects/pathplayer-release-key.jks \
+  -keyalg RSA -keysize 2048 -validity 10000 \
+  -alias pathplayer
+```
+
+`keytool` will prompt you for keystore and key passwords, plus a few identity fields. The values you enter are only stored in the keystore and are not validated by Android for sideloading.
+
+#### 2. Configure signing
+
+Create `android/key.properties` (this file is already gitignored) and point it at the keystore:
+
+```properties
+storePassword=YOUR_KEYSTORE_PASSWORD
+keyPassword=YOUR_KEY_PASSWORD
+keyAlias=pathplayer
+storeFile=/Users/YOUR_USERNAME/projects/pathplayer-release-key.jks
+```
+
+Replace `YOUR_USERNAME` with your actual home directory name and `YOUR_KEYSTORE_PASSWORD` / `YOUR_KEY_PASSWORD` with the passwords you chose in step 1.
+
+#### 3. Build the release APK
+
+```bash
+.flutter/flutter/bin/flutter pub get
 .flutter/flutter/bin/flutter build apk --release
 ```
 
@@ -44,6 +75,8 @@ Output:
 ```
 build/app/outputs/flutter-apk/app-release.apk
 ```
+
+If you later want to publish on the Google Play Store, you will need to build an **Android App Bundle (AAB)** instead of an APK and use Play App Signing. See the [Flutter deployment documentation](https://docs.flutter.dev/deployment/android) for details.
 
 ---
 

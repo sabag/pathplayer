@@ -14,18 +14,18 @@ Unlike mainstream music players that parse metadata tags (Artist, Album, Genre),
 3. **Fuzzy Search & Direct Play:** Search for individual tracks globally via text phrase and play a specific selection immediately.
 
 ### Architectural Layout
-Whether implemented in Flutter or Kotlin, the application must adhere to a strict clean-architecture separation:
+The application is built with Flutter and follows a clean-architecture separation:
 ```
-[ UI layer (Compose / Flutter Widgets) ]
+[ UI layer (Flutter Widgets) ]
                    │
                    ▼
-    [ State Management (View Model / Bloc) ]
+    [ State Management (Riverpod) ]
                    │
                    ▼
      [ Service / API Layer (Jellyfin Client) ]
                    │
                    ▼
-      [ Audio Player Engine (ExoPlayer / just_audio) ]
+       [ Audio Player Engine (just_audio + audio_service) ]
 ```
 
 ---
@@ -89,30 +89,4 @@ The coding agent must implement Jellyfin's username/password authentication and 
 > **Prompt for Agent:**
 > Implement a dedicated search screen with a basic text input field. When the user types or presses enter, call the `/Users/{userId}/Items` search endpoint. Render both folders and audio tracks in a clean vertical list. Clicking a song should clear the current playback queue, initialize the player with that specific single stream URL, and play it instantly.
 
----
 
-## 4. Kotlin (Jetpack Compose) Implementation Blueprint
-
-### Recommended Framework Stack
-* **UI Architecture:** Jetpack Compose (Declarative UI)
-* **Asynchronous Flow:** Kotlin Coroutines & StateFlow
-* **Network Client:** Retrofit or Ktor Client with Kotlinx Serialization
-* **Audio Engine:** Media3 ExoPlayer (`androidx.media3:media3-exoplayer`)
-
-### Step-by-Step Prompting Sequence for the Agent
-
-#### Phase K1: Core Network Layer and Jellyfin Auth
-> **Prompt for Agent:**
-> Write a Kotlin repository class using Ktor or Retrofit to interact with a Jellyfin server. Implement the `AuthenticateByName` call with the `MediaBrowser` device header, persist the access token, and attach it as `Authorization: MediaBrowser Token=<token>` to subsequent requests. Create models representing the data payload from the `/Users/{userId}/Items` endpoint. Derive display names from the item `Path` so folder names match the filesystem.
-
-#### Phase K2: Compose Folder Browser Interface
-> **Prompt for Agent:**
-> Create a Jetpack Compose screen for directory-based navigation. Build a `LazyColumn` that loops through items fetched from the server. When an item is clicked, call the `/Users/{userId}/Items?ParentId=...` endpoint. Differentiate the UI rows: sub-directories should feature an explicit icon indicator, while tracks should look like standard audio files. Add an item at the top of the column labeled "Shuffle Play Folder" if any audio tracks are present in the list state.
-
-#### Phase K3: Media3 ExoPlayer Service Implementation
-> **Prompt for Agent:**
-> Implement an Android Media3 ExoPlayer wrapper to stream music directly from the Jellyfin backend. Write a playback function that accepts a collection of track records from the active directory. For each record, build a `MediaItem` utilizing the explicit `/Audio/{id}/stream?static=true&api_key=...` URL format. Shuffle the sequence inside the controller list, attach the array directly to the ExoPlayer instance, clear any legacy tracks, and invoke `.prepare()` and `.play()`.
-
-#### Phase K4: Dynamic Search Implementation
-> **Prompt for Agent:**
-> Create a Jetpack Compose Search UI containing a standard `OutlinedTextField`. Route text queries to the `/Users/{userId}/Items` search endpoint. Render both folders and audio tracks in an intuitive list layout where a simple click builds an individual isolated `MediaItem` instance, flushes the active playlist array, and immediately triggers an instantaneous playback change.
