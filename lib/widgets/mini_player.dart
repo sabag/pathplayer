@@ -59,6 +59,10 @@ class MiniPlayer extends ConsumerWidget {
                 ),
                 onPressed: player.togglePlayPause,
               ),
+              IconButton(
+                icon: const Icon(Icons.skip_next),
+                onPressed: player.skipToNext,
+              ),
             ],
           ),
         ),
