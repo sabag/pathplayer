@@ -5,7 +5,7 @@
 class SubsonicConfig {
   const SubsonicConfig._();
 
-  static const String baseUrl = 'https://YOUR_SERVER_DOMAIN';
+  static const String baseUrl = 'https://mp3.myserver.com';
   static const String username = 'YOUR_USERNAME';
   static const String password = 'YOUR_PASSWORD';
 }
