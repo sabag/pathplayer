@@ -8,6 +8,7 @@ import '../audio/audio_handler.dart';
 import '../audio/audio_service.dart';
 import '../models/server_credentials.dart';
 import '../services/auth_token_holder.dart';
+import '../services/device_info_service.dart';
 import '../services/jellyfin_api.dart';
 import '../services/jellyfin_auth.dart';
 import '../services/jellyfin_auth_interceptor.dart';
@@ -65,13 +66,20 @@ class AuthController extends StateNotifier<AuthState> {
 
   final SecureStorageService _storage;
   String? _deviceId;
+  DeviceAuthInfo? _deviceInfo;
 
   Future<String> get _deviceIdOrCreate async {
     _deviceId ??= await _storage.readOrCreateDeviceId();
     return _deviceId!;
   }
 
+  Future<DeviceAuthInfo> get _deviceInfoOrCreate async {
+    _deviceInfo ??= await DeviceInfoService.getInfo();
+    return _deviceInfo!;
+  }
+
   Future<void> _init() async {
+    await _deviceInfoOrCreate;
     await _deviceIdOrCreate;
 
     final saved = await _storage.read();
@@ -113,15 +121,20 @@ class AuthController extends StateNotifier<AuthState> {
       );
 
       final deviceId = await _deviceIdOrCreate;
+      final deviceInfo = await _deviceInfoOrCreate;
       final tokenHolder = AuthTokenHolder(deviceId: deviceId);
-      final authCredentials = await JellyfinAuth(dio, deviceId: deviceId)
-          .authenticate(credentials.username, credentials.password);
+      final authCredentials = await JellyfinAuth(
+        dio,
+        deviceId: deviceId,
+        deviceName: deviceInfo.deviceName,
+        clientVersion: deviceInfo.clientVersion,
+      ).authenticate(credentials.username, credentials.password);
       tokenHolder.credentials = authCredentials;
       debugPrint(
         '[AuthController] login succeeded userId=${authCredentials.userId}',
       );
 
-      _attachAuthInterceptor(dio, credentials, tokenHolder);
+      _attachAuthInterceptor(dio, credentials, tokenHolder, deviceInfo);
       await _enterAuthenticatedState(
         dio: dio,
         tokenHolder: tokenHolder,
@@ -148,9 +161,10 @@ class AuthController extends StateNotifier<AuthState> {
     JellyfinCredentials auth,
   ) async {
     final deviceId = await _deviceIdOrCreate;
+    final deviceInfo = await _deviceInfoOrCreate;
     final tokenHolder = AuthTokenHolder(deviceId: deviceId)
       ..credentials = auth;
-    final dio = _createDio(credentials, tokenHolder);
+    final dio = _createDio(credentials, tokenHolder, deviceInfo);
     debugPrint(
       '[AuthController] session resumed with interceptor attached',
     );
@@ -184,7 +198,11 @@ class AuthController extends StateNotifier<AuthState> {
     );
   }
 
-  Dio _createDio(ServerCredentials credentials, AuthTokenHolder tokenHolder) {
+  Dio _createDio(
+    ServerCredentials credentials,
+    AuthTokenHolder tokenHolder,
+    DeviceAuthInfo deviceInfo,
+  ) {
     final dio = Dio(
       BaseOptions(
         baseUrl: credentials.serverUrl,
@@ -192,7 +210,7 @@ class AuthController extends StateNotifier<AuthState> {
         receiveTimeout: const Duration(seconds: 30),
       ),
     );
-    _attachAuthInterceptor(dio, credentials, tokenHolder);
+    _attachAuthInterceptor(dio, credentials, tokenHolder, deviceInfo);
     return dio;
   }
 
@@ -200,6 +218,7 @@ class AuthController extends StateNotifier<AuthState> {
     Dio dio,
     ServerCredentials credentials,
     AuthTokenHolder tokenHolder,
+    DeviceAuthInfo deviceInfo,
   ) {
     debugPrint('[AuthController] attaching auth interceptor');
     final interceptor = JellyfinAuthInterceptor(
@@ -210,6 +229,8 @@ class AuthController extends StateNotifier<AuthState> {
       tokenHolder: tokenHolder,
       onRefreshed: _onTokenRefreshed,
       onRefreshFailed: _onRefreshFailed,
+      deviceName: deviceInfo.deviceName,
+      clientVersion: deviceInfo.clientVersion,
     );
     dio.interceptors.add(interceptor);
   }
@@ -250,8 +271,13 @@ class AuthController extends StateNotifier<AuthState> {
             BaseOptions(baseUrl: authenticated.dio.options.baseUrl),
           );
           final deviceId = await _deviceIdOrCreate;
-          await JellyfinAuth(logoutDio, deviceId: deviceId)
-              .logout(token: token);
+          final deviceInfo = await _deviceInfoOrCreate;
+          await JellyfinAuth(
+            logoutDio,
+            deviceId: deviceId,
+            deviceName: deviceInfo.deviceName,
+            clientVersion: deviceInfo.clientVersion,
+          ).logout(token: token);
           logoutDio.close();
         } catch (_) {
           // Ignore server-side logout failures; local state must still clear.

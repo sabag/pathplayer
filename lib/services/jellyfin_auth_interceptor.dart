@@ -30,6 +30,8 @@ class JellyfinAuthInterceptor extends Interceptor {
     required this.tokenHolder,
     required this.onRefreshed,
     required this.onRefreshFailed,
+    required this.deviceName,
+    required this.clientVersion,
   });
 
   final Dio dio;
@@ -37,6 +39,8 @@ class JellyfinAuthInterceptor extends Interceptor {
   final String username;
   final String password;
   final AuthTokenHolder tokenHolder;
+  final String deviceName;
+  final String clientVersion;
   final void Function(JellyfinCredentials credentials) onRefreshed;
   final Future<void> Function(Object error) onRefreshFailed;
 
@@ -50,6 +54,8 @@ class JellyfinAuthInterceptor extends Interceptor {
       options.headers['Authorization'] = JellyfinAuth.authHeader(
         token: token,
         deviceId: tokenHolder.deviceId,
+        deviceName: deviceName,
+        clientVersion: clientVersion,
       );
     }
     debugPrint(
@@ -107,8 +113,12 @@ class JellyfinAuthInterceptor extends Interceptor {
       ),
     );
     try {
-      return await JellyfinAuth(reauthDio, deviceId: tokenHolder.deviceId)
-          .authenticate(username, password);
+      return await JellyfinAuth(
+        reauthDio,
+        deviceId: tokenHolder.deviceId,
+        deviceName: deviceName,
+        clientVersion: clientVersion,
+      ).authenticate(username, password);
     } finally {
       reauthDio.close();
     }

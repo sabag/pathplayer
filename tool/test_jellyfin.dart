@@ -3,6 +3,7 @@
 import 'dart:io';
 
 import 'package:dio/dio.dart';
+import 'package:pathplayer/services/auth_token_holder.dart';
 import 'package:pathplayer/services/jellyfin_api.dart';
 import 'package:pathplayer/services/jellyfin_auth.dart';
 
@@ -21,10 +22,17 @@ Future<void> main() async {
   }
 
   final dio = Dio(BaseOptions(baseUrl: serverUrl));
-  final credentials = await JellyfinAuth(dio).authenticate(username, password);
+  final credentials = await JellyfinAuth(
+    dio,
+    deviceId: 'pathplayer-test',
+    deviceName: 'Test Device',
+    clientVersion: '0.0.0',
+  ).authenticate(username, password);
   print('Authenticated user: ${credentials.userId}');
 
-  final api = JellyfinApiClient(dio: dio, credentials: credentials);
+  final tokenHolder = AuthTokenHolder(deviceId: 'pathplayer-test')
+    ..credentials = credentials;
+  final api = JellyfinApiClient(dio: dio, tokenHolder: tokenHolder);
 
   print('\n--- Root items ---');
   final root = await api.getTopLevelItems();

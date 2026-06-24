@@ -8,18 +8,27 @@ void main() {
       final header = JellyfinAuth.authHeader(
         token: 'abc123',
         deviceId: 'device-42',
+        deviceName: 'Pixel 4',
+        clientVersion: '7.0.1',
       );
       expect(header, startsWith('MediaBrowser '));
       expect(header, contains('Client="PathPlayer"'));
-      expect(header, contains('Device="Android"'));
+      expect(header, contains('Device="Pixel 4"'));
       expect(header, contains('DeviceId="device-42"'));
+      expect(header, contains('Version="7.0.1"'));
       expect(header, contains('Token="abc123"'));
     });
 
     test('authHeader omits token when not provided', () {
-      final header = JellyfinAuth.authHeader(deviceId: 'device-42');
+      final header = JellyfinAuth.authHeader(
+        deviceId: 'device-42',
+        deviceName: 'Pixel 4',
+        clientVersion: '7.0.1',
+      );
       expect(header, isNot(contains('Token=')));
+      expect(header, contains('Device="Pixel 4"'));
       expect(header, contains('DeviceId="device-42"'));
+      expect(header, contains('Version="7.0.1"'));
     });
   });
 
