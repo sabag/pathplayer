@@ -118,7 +118,7 @@ class _DirectoryList extends StatelessWidget {
         if (canShuffle && index == 0) {
           return Padding(
             padding: const EdgeInsets.all(12),
-            child: ElevatedButton.icon(
+            child: FilledButton.icon(
               icon: isShuffling
                   ? const SizedBox(
                       width: 18,
