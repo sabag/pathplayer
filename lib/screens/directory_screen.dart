@@ -9,6 +9,7 @@ import '../utils/error_message.dart';
 import '../widgets/folder_tile.dart';
 import '../widgets/mini_player.dart';
 import '../widgets/track_tile.dart';
+import 'search_screen.dart';
 
 class DirectoryScreen extends ConsumerStatefulWidget {
   const DirectoryScreen({
@@ -64,7 +65,29 @@ class _DirectoryScreenState extends ConsumerState<DirectoryScreen> {
     final directoryAsync = ref.watch(directoryProvider(widget.id));
 
     return Scaffold(
-      appBar: AppBar(title: Text(widget.name)),
+      appBar: AppBar(
+        title: Text(widget.name),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.search),
+            tooltip: 'Search',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => const SearchScreen(),
+                ),
+              );
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.home),
+            tooltip: 'Home',
+            onPressed: () {
+              Navigator.of(context).popUntil((route) => route.isFirst);
+            },
+          ),
+        ],
+      ),
       body: directoryAsync.when(
         data: (items) => _DirectoryList(
           items: items,
