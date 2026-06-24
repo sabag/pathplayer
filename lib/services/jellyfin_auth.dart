@@ -13,9 +13,10 @@ class JellyfinCredentials {
 
 /// Handles Jellyfin user authentication.
 class JellyfinAuth {
-  JellyfinAuth(this._dio);
+  JellyfinAuth(this._dio, {required this.deviceId});
 
   final Dio _dio;
+  final String deviceId;
 
   Future<JellyfinCredentials> authenticate(
     String username,
@@ -28,7 +29,7 @@ class JellyfinAuth {
         'Pw': password,
       },
       options: Options(
-        headers: {'Authorization': authHeader()},
+        headers: {'Authorization': authHeader(deviceId: deviceId)},
         contentType: 'application/json',
       ),
     );
@@ -43,15 +44,27 @@ class JellyfinAuth {
     );
   }
 
+  /// Logs out the current session on the Jellyfin server.
+  Future<void> logout({required String token}) async {
+    await _dio.post<Map<String, dynamic>>(
+      '/Sessions/Logout',
+      options: Options(
+        headers: {
+          'Authorization': authHeader(token: token, deviceId: deviceId),
+        },
+      ),
+    );
+  }
+
   /// Builds the `Authorization` header required by Jellyfin.
   ///
   /// [token] should be added once authentication has completed.
-  static String authHeader({String? token}) {
+  static String authHeader({String? token, required String deviceId}) {
     final buffer = StringBuffer()
       ..write('MediaBrowser ')
       ..write('Client="PathPlayer", ')
       ..write('Device="Android", ')
-      ..write('DeviceId="pathplayer-1", ')
+      ..write('DeviceId="$deviceId", ')
       ..write('Version="1.0.0"');
     if (token != null) {
       buffer.write(', Token="$token"');

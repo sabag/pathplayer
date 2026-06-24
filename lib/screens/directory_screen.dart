@@ -5,6 +5,7 @@ import '../models/jellyfin_item.dart';
 import '../providers/auth_controller.dart';
 import '../providers/directory_provider.dart';
 import '../providers/player_provider.dart';
+import '../utils/error_message.dart';
 import '../widgets/folder_tile.dart';
 import '../widgets/mini_player.dart';
 import '../widgets/track_tile.dart';
@@ -49,7 +50,7 @@ class _DirectoryScreenState extends ConsumerState<DirectoryScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not load tracks: $e')),
+        SnackBar(content: Text('Could not load tracks: ${apiErrorMessage(e)}')),
       );
     } finally {
       if (mounted) {
@@ -81,7 +82,7 @@ class _DirectoryScreenState extends ConsumerState<DirectoryScreen> {
         error: (error, stack) => Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
-            child: Text('Failed to load directory: $error'),
+            child: Text('Failed to load directory: ${apiErrorMessage(error)}'),
           ),
         ),
       ),

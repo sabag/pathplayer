@@ -5,15 +5,21 @@ import 'package:pathplayer/services/jellyfin_auth.dart';
 void main() {
   group('JellyfinAuth', () {
     test('authHeader includes device info and optional token', () {
-      final header = JellyfinAuth.authHeader(token: 'abc123');
+      final header = JellyfinAuth.authHeader(
+        token: 'abc123',
+        deviceId: 'device-42',
+      );
       expect(header, startsWith('MediaBrowser '));
       expect(header, contains('Client="PathPlayer"'));
+      expect(header, contains('Device="Android"'));
+      expect(header, contains('DeviceId="device-42"'));
       expect(header, contains('Token="abc123"'));
     });
 
     test('authHeader omits token when not provided', () {
-      final header = JellyfinAuth.authHeader();
+      final header = JellyfinAuth.authHeader(deviceId: 'device-42');
       expect(header, isNot(contains('Token=')));
+      expect(header, contains('DeviceId="device-42"'));
     });
   });
 

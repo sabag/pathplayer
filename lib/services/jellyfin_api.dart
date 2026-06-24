@@ -1,18 +1,14 @@
 import 'package:dio/dio.dart';
 
 import '../models/jellyfin_item.dart';
-import 'jellyfin_auth.dart';
+import 'auth_token_holder.dart';
 
 /// Authenticated Jellyfin API client for folder-based browsing.
 class JellyfinApiClient {
-  JellyfinApiClient({required this.dio, required this.credentials});
+  JellyfinApiClient({required this.dio, required this.tokenHolder});
 
   final Dio dio;
-  final JellyfinCredentials credentials;
-
-  Map<String, dynamic> get _authHeaders => {
-        'Authorization': JellyfinAuth.authHeader(token: credentials.accessToken),
-      };
+  final AuthTokenHolder tokenHolder;
 
   /// Returns the top-level music libraries, or the contents of the single
   /// music library when only one exists.
@@ -64,8 +60,12 @@ class JellyfinApiClient {
   /// Builds a direct static stream URL for an audio [itemId].
   String streamUrl(String itemId) {
     final base = dio.options.baseUrl;
+    final token = tokenHolder.accessToken;
+    if (token == null || token.isEmpty) {
+      throw StateError('Cannot build stream URL without an access token');
+    }
     return '$base/Audio/$itemId/stream'
-        '?static=true&api_key=${credentials.accessToken}';
+        '?static=true&api_key=$token';
   }
 
   Future<List<JellyfinItem>> _getItems({
@@ -75,8 +75,13 @@ class JellyfinApiClient {
     List<String>? includeItemTypes,
     int limit = 300,
   }) async {
+    final userId = tokenHolder.userId;
+    if (userId == null || userId.isEmpty) {
+      throw StateError('Cannot make API calls without a user id');
+    }
+
     final query = <String, dynamic>{
-      'UserId': credentials.userId,
+      'UserId': userId,
       'Limit': limit,
       'Recursive': recursive,
       'ParentId': parentId,
@@ -88,7 +93,6 @@ class JellyfinApiClient {
     final response = await dio.get<Map<String, dynamic>>(
       '/Items',
       queryParameters: query,
-      options: Options(headers: _authHeaders),
     );
 
     final data = response.data!;

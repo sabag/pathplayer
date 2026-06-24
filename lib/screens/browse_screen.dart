@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/auth_controller.dart';
 import '../providers/player_provider.dart';
 import '../providers/root_indexes_provider.dart';
+import '../utils/error_message.dart';
 import '../widgets/folder_tile.dart';
 import '../widgets/mini_player.dart';
 import '../widgets/track_tile.dart';
@@ -84,7 +85,7 @@ class BrowseScreen extends ConsumerWidget {
         error: (error, stack) => Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
-            child: Text('Failed to load library: $error'),
+            child: Text('Failed to load library: ${apiErrorMessage(error)}'),
           ),
         ),
       ),

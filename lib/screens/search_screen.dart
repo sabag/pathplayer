@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/jellyfin_item.dart';
 import '../providers/player_provider.dart';
 import '../providers/search_provider.dart';
+import '../utils/error_message.dart';
 import '../widgets/folder_tile.dart';
 import '../widgets/mini_player.dart';
 import '../widgets/track_tile.dart';
@@ -99,7 +100,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         error: (error, stack) => Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
-            child: Text('Search failed: $error'),
+            child: Text('Search failed: ${apiErrorMessage(error)}'),
           ),
         ),
       ),
